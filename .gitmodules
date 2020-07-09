@@ -1,3 +1,3 @@
 [submodule "linux"]
 	path = linux
-	url = https://github.com/g7/linux.git
+	url = https://github.com/sailfish-on-dontbeevil/linux.git
