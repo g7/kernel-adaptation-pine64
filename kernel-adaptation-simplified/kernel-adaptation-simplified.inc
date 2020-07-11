@@ -39,6 +39,8 @@
 %define build_modules 1
 %endif
 
+%define _tmpdir tmp
+
 Name:           kernel-adaptation-%{rpm_device}
 Summary:        Kernel adaptation for %{rpm_device}
 Group:          System
@@ -69,6 +71,9 @@ BuildRequires:  cross-%{crossbuild}-binutils
 %setup -q -n %{name}-%{version}
 
 %build
+
+rm -rf %{_tmpdir}
+mkdir -p %{_tmpdir}
 
 export ARCH=%{kernel_arch}
 export LOCALVERSION="-%{device}"
@@ -105,34 +110,33 @@ make -C %{source_directory} -j$(nproc) modules
 make -C %{source_directory} -j$(nproc) dtbs
 %endif
 
-cd ..
-
 %install
 
-mkdir -p $RPM_BUILD_ROOT/boot
+mkdir -p %{buildroot}/boot
 
 %if %{build_Image}
-cp %{source_directory}/arch/%{kernel_arch}/boot/Image $RPM_BUILD_ROOT/boot/Image
+cp %{source_directory}/arch/%{kernel_arch}/boot/Image %{buildroot}/boot/Image
 %endif
 
 %if %{build_uImage}
-cp %{source_directory}/arch/%{kernel_arch}/boot/uImage $RPM_BUILD_ROOT/boot/uImage
+cp %{source_directory}/arch/%{kernel_arch}/boot/uImage %{buildroot}/boot/uImage
 %endif
 
 %if %{build_zImage}
-cp %{source_directory}/arch/%{kernel_arch}/boot/zImage $RPM_BUILD_ROOT/boot/zImage
+cp %{source_directory}/arch/%{kernel_arch}/boot/zImage %{buildroot}/boot/zImage
 %endif
 
 %if 0%{?devicetrees:1}
 for dtb in %{devicetrees}; do
-	mkdir -p $RPM_BUILD_ROOT/boot/$(basename $(dirname $dtb))
-	cp %{source_directory}/arch/%{kernel_arch}/boot/dts/$dtb $RPM_BUILD_ROOT/boot/$dtb
+	mkdir -p %{buildroot}/boot/$(basename $(dirname $dtb))
+	cp %{source_directory}/arch/%{kernel_arch}/boot/dts/$dtb %{buildroot}/boot/$dtb
 done
 %endif
 
-mkdir -p $RPM_BUILD_ROOT/lib/modules
-make -C %{source_directory} modules_install INSTALL_MOD_PATH=$RPM_BUILD_ROOT
+mkdir -p %{buildroot}/lib/modules
+make -C %{source_directory} modules_install INSTALL_MOD_PATH=%{buildroot}
 
-%files
-/boot
-/lib/modules
+# Build filelist
+find %{buildroot} ! \( -type d \) | sed -e s/"%{buildroot}"//g> %{_tmpdir}/kernel-adaptation.files
+
+%files -f %{_tmpdir}/kernel-adaptation.files
