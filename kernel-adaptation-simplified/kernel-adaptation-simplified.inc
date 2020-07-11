@@ -137,6 +137,6 @@ mkdir -p %{buildroot}/lib/modules
 make -C %{source_directory} modules_install INSTALL_MOD_PATH=%{buildroot}
 
 # Build filelist
-find %{buildroot} ! \( -type d \) | sed -e s/"%{buildroot}"//g> %{_tmpdir}/kernel-adaptation.files
+find %{buildroot} ! \( -type d \) | sed -e s,"%{buildroot}",,g> %{_tmpdir}/kernel-adaptation.files
 
 %files -f %{_tmpdir}/kernel-adaptation.files
